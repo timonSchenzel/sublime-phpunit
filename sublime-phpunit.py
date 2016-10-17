@@ -108,19 +108,11 @@ class OpenMatchingTestCommand(sublime_plugin.WindowCommand):
         self.window.open_file(file_path)
 
     def find(self, name, path):
-        print(name)
+        # print(name)
         for root, dirs, files in os.walk(path):
-            print(files)
+            # print(files)
             if name in files:
                 return os.path.join(root, name)
 
     def find_project_root(self, file_name):
-        file_path = file_name
-        found = False
-        while found == False:
-            file_path = os.path.abspath(os.path.join(file_path, os.pardir))
-            found = os.path.isfile(file_path + '/phpunit.xml') or file_path == '/'
-        return file_path
-
-
-
+        return self.window.folders()[0]
