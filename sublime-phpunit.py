@@ -119,7 +119,7 @@ class OpenMatchingTestCommand(sublime_plugin.WindowCommand):
         found = False
         while found == False:
             file_path = os.path.abspath(os.path.join(file_path, os.pardir))
-            found = os.path.isfile(file_path + '/artisan') or file_path == '/'
+            found = os.path.isfile(file_path + '/phpunit.xml') or file_path == '/'
         return file_path
 
 
