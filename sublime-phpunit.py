@@ -85,7 +85,7 @@ class RunPhpunitTestsInDirCommand(PhpunitTestCommand):
 
         self.run_in_terminal('cd ' + phpunit_config_path + ' && phpunit ' + directory)
 
-class FindMatchingTestCommand(sublime_plugin.WindowCommand):
+class OpenMatchingTestCommand(sublime_plugin.WindowCommand):
 
     def path_leaf(self, path):
         head, tail = ntpath.split(path)
@@ -95,25 +95,32 @@ class FindMatchingTestCommand(sublime_plugin.WindowCommand):
         file_name = self.window.active_view().file_name()
         file_name = self.path_leaf(file_name)
         file_name = file_name[0:file_name.find('.')]
-        tab_target = 0
 
         if 'Test' not in file_name:
             file_name = file_name + 'Test'
         else:
             # Strip 'Test' and add '.' to force matching the non-test file
             file_name = file_name[0:file_name.find('Test')] + '.'
-            tab_target = 1
 
-        # Big dirty macro-ish hack. Eventually I should just open the file in some sort of
-        # logical way.
-        self.window.run_command("set_layout", {"cells": [[0, 0, 1, 1], [1, 0, 2, 1]], "cols": [0.0, 0.5, 1.0], "rows": [0.0, 1.0]})
-        self.window.run_command("focus_group", {"group": tab_target})
-        self.window.run_command("show_overlay", {"overlay": "goto", "text": file_name, "show_files": "true"})
-        self.window.run_command("move", {"by": "lines", "forward": False})
+        test_path = self.find_project_root(file_name) + '/tests'
+        file_path = self.find(file_name + '.php', test_path)
 
-        # This is a dirty hack to get it to switch files... Can't simulate 'Enter'
-        # but triggering the overlay again to close it seems to have the same effect.
-        self.window.run_command("show_overlay", {"overlay": "goto", "show_files": "true"})
-        self.window.run_command("focus_group", {"group": 0})
-        self.window.run_command("focus_group", {"group": tab_target})
+        self.window.open_file(file_path)
+
+    def find(self, name, path):
+        print(name)
+        for root, dirs, files in os.walk(path):
+            print(files)
+            if name in files:
+                return os.path.join(root, name)
+
+    def find_project_root(self, file_name):
+        file_path = file_name
+        found = False
+        while found == False:
+            file_path = os.path.abspath(os.path.join(file_path, os.pardir))
+            found = os.path.isfile(file_path + '/artisan') or file_path == '/'
+        return file_path
+
+
 
