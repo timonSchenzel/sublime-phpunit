@@ -59,3 +59,17 @@ If you use [fish shell](https://fishshell.com/), specify this in your settings:
 ``` 
 
 This will instruct Sublime PHPUnit to connect the commands using fish's `; and` instead of bash's `&&`.
+
+## Running tests over ssh (for VMs like Laravel Homestead)
+
+```json
+"phpunit-sublime-ssh": true,
+"phpunit-sublime-ssh-host": "host",
+"phpunit-sublime-ssh-user": "user",
+"phpunit-sublime-ssh-port": 22,
+"phpunit-sublime-ssh-paths": {
+	"/your/local/path": "/your/remote/path"
+},
+"phpunit-sublime-ssh-command-suffix": "--configuration /home/vagrant/projects/pinkcubeshops/phpunit.xml",
+"phpunit-sublime-ssh-command-prefix": "TERM=xterm-256color",
+```
