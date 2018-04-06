@@ -50,13 +50,13 @@ By default, this package uses macOS's built-in Terminal.app. If you want to use 
 
 ## Using fish shell
 
-If you use [fish shell](https://fishshell.com/), specify this in your settings:
+If you use [fish shell](https://fishshell.com/), specify this in your settings: 
 
 ```
 {
     "php-sublime-shell": "fish"
 }
-```
+``` 
 
 This will instruct Sublime PHPUnit to connect the commands using fish's `; and` instead of bash's `&&`.
 
@@ -75,3 +75,4 @@ This will instruct Sublime PHPUnit to connect the commands using fish's `; and` 
 	"phpunit-sublime-ssh-command-prefix": "TERM=xterm-256color"
 }
 ```
+Default ssh port is 22, so setting phpunit-sublime-ssh-port is optional. Also phpunit-sublime-ssh-command-suffix and phpunit-sublime-ssh-command-prefix are of course optional.
