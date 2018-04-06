@@ -9,6 +9,7 @@ import sublime_plugin
 class PhpunitTestCommand(sublime_plugin.WindowCommand):
 
     lastTestCommand = False
+    lastFilter = False
 
     def get_setting(self, key, default=None):
         return sublime.load_settings("Preferences.sublime-settings").get(key, default)
@@ -73,6 +74,11 @@ class PhpunitTestCommand(sublime_plugin.WindowCommand):
     def run_in_terminal(self, command):
         osascript_command = 'osascript '
 
+        useSsh = self.get_setting('phpunit-sublime-ssh', False)
+
+        if useSsh:
+            command = self.localToSshCommand(self.filter);
+
         if self.get_setting('phpunit-sublime-terminal', 'Term') == 'iTerm':
             osascript_command += '"' + os.path.dirname(os.path.realpath(__file__)) + '/open_iterm.applescript"'
             osascript_command += ' "' + command + '"'
@@ -81,13 +87,39 @@ class PhpunitTestCommand(sublime_plugin.WindowCommand):
             osascript_command += ' "' + command + '"'
             osascript_command += ' "PHPUnit Tests"'
 
+        self.lastFilter = self.filter
         self.lastTestCommand = command
         os.system(osascript_command)
+
+    def localToSshCommand(self, phpunitFilter):
+        localToHostProjectRoots = self.get_setting('phpunit-sublime-ssh-paths', {})
+        filePath = self.window.active_view().file_name()
+
+        for localRoot in localToHostProjectRoots:
+            if localRoot in filePath:
+                localProjectRoot = localRoot
+                hostProjectRoot = localToHostProjectRoots[localRoot]
+
+        sshCommand = "ssh -t -p" + str(self.get_setting('phpunit-sublime-ssh-port', 22)) + " " + self.get_setting('phpunit-sublime-ssh-user') + "@" + self.get_setting('phpunit-sublime-ssh-host') + " 'cd " + hostProjectRoot + "; vendor/bin/phpunit' " + phpunitFilter.replace(localProjectRoot, hostProjectRoot);
+
+        prefixCommand = self.get_setting('phpunit-sublime-ssh-command-prefix', False)
+
+        if prefixCommand:
+            sshCommand = prefixCommand + ' ' + sshCommand
+
+        suffixCommand = self.get_setting('phpunit-sublime-ssh-command-suffix', False)
+
+        if suffixCommand:
+            sshCommand = sshCommand + ' ' + suffixCommand
+
+        return sshCommand
 
 class RunPhpunitTestCommand(PhpunitTestCommand):
 
     def run(self, *args, **kwargs):
         file_name, phpunit_config_path, phpunit_bin, active_view, directory = self.get_paths()
+
+        self.filter = file_name
 
         self.run_in_terminal('cd ' + phpunit_config_path + self.get_cmd_connector() + phpunit_bin + ' ' + file_name)
 
@@ -95,6 +127,8 @@ class RunAllPhpunitTestsCommand(PhpunitTestCommand):
 
     def run(self, *args, **kwargs):
         file_name, phpunit_config_path, phpunit_bin, active_view, directory = self.get_paths()
+
+        self.filter = ''
 
         self.run_in_terminal('cd ' + phpunit_config_path + self.get_cmd_connector() + phpunit_bin)
 
@@ -106,6 +140,8 @@ class RunSinglePhpunitTestCommand(PhpunitTestCommand):
 
         current_function = self.get_current_function(active_view)
 
+        self.filter = file_name + " --filter '/::" + current_function + "$/'"
+
         self.run_in_terminal('cd ' + phpunit_config_path + self.get_cmd_connector() + phpunit_bin + ' ' + file_name + " --filter '/::" + current_function + "$/'")
 
 class RunLastPhpunitTestCommand(PhpunitTestCommand):
@@ -116,12 +152,15 @@ class RunLastPhpunitTestCommand(PhpunitTestCommand):
         if 'Test' in file_name:
             RunSinglePhpunitTestCommand.run(self, args, kwargs);
         elif self.lastTestCommand:
+            self.filter = self.lastFilter
             self.run_in_terminal(self.lastTestCommand)
 
 class RunPhpunitTestsInDirCommand(PhpunitTestCommand):
 
     def run(self, *args, **kwargs):
         file_name, phpunit_config_path, phpunit_bin, active_view, directory = self.get_paths()
+
+        self.filter = directory
 
         self.run_in_terminal('cd ' + phpunit_config_path + self.get_cmd_connector() + phpunit_bin + ' ' + directory)
 
